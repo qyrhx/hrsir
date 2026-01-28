@@ -22,10 +22,11 @@ description:         Please see the README on GitHub at <https://github.com/qyrh
 dependencies:
 - base >= 4.7 && < 5
 - bytestring
+- directory
+- aeson
 #- brick
 #- req
 #- feed
-- aeson
 
 ghc-options:
 - -Wall

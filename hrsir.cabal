@@ -33,6 +33,7 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , directory
   default-language: Haskell2010
 
 executable hrsir-exe
@@ -46,6 +47,7 @@ executable hrsir-exe
       aeson
     , base >=4.7 && <5
     , bytestring
+    , directory
     , hrsir
   default-language: Haskell2010
 
@@ -61,5 +63,6 @@ test-suite hrsir-test
       aeson
     , base >=4.7 && <5
     , bytestring
+    , directory
     , hrsir
   default-language: Haskell2010
