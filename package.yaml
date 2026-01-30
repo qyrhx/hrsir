@@ -24,9 +24,10 @@ dependencies:
 - bytestring
 - directory
 - aeson
-#- brick
-#- req
-#- feed
+- brick
+- vty
+- feed
+- req
 
 ghc-options:
 - -Wall
@@ -46,17 +47,6 @@ executables:
   hrsir-exe:
     main:                Main.hs
     source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - hrsir
-
-tests:
-  hrsir-test:
-    main:                Spec.hs
-    source-dirs:         test
     ghc-options:
     - -threaded
     - -rtsopts
