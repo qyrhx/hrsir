@@ -21,13 +21,15 @@ description:         Please see the README on GitHub at <https://github.com/qyrh
 
 dependencies:
 - base >= 4.7 && < 5
+- text
 - bytestring
 - directory
 - aeson
+- req
+- feed
+- xml-types
 - brick
 - vty
-- feed
-- req
 
 ghc-options:
 - -Wall

@@ -27,6 +27,7 @@ library
   exposed-modules:
       Config
       RSS
+      UI
   other-modules:
       Paths_hrsir
   hs-source-dirs:
@@ -40,7 +41,9 @@ library
     , directory
     , feed
     , req
+    , text
     , vty
+    , xml-types
   default-language: Haskell2010
 
 executable hrsir-exe
@@ -59,5 +62,7 @@ executable hrsir-exe
     , feed
     , hrsir
     , req
+    , text
     , vty
+    , xml-types
   default-language: Haskell2010
