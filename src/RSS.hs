@@ -6,7 +6,6 @@ import Data.Text (Text)
 import Text.Feed.Import (parseFeedSource)
 import Text.Feed.Types (Feed)
 
-
 type RssFeedList = [RssFeed]
 data RssFeed = RssFeed
   { url :: String
