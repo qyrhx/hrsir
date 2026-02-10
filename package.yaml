@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - text
 - bytestring
+- network-uri
 - directory
 - aeson
 - req
@@ -30,6 +31,10 @@ dependencies:
 - xml-types
 - brick
 - vty
+- vector
+- microlens
+- microlens-mtl
+- microlens-th
 
 ghc-options:
 - -Wall
