@@ -5,52 +5,95 @@ module UI where
 
 import RSS
 import Brick
+import Data.Text (unpack)
 import Brick.Widgets.Border
-import Brick.Widgets.Center (hCenter)
+import Lens.Micro ((^.))
+import Lens.Micro.TH (makeLenses)
+import Lens.Micro.Mtl ((%=), (.=), use)
 import qualified Brick.Widgets.List as L
 import qualified Graphics.Vty as V
 import qualified Data.Vector as Vec
-import Data.Text (Text, unpack, pack)
-
-import Lens.Micro.TH (makeLenses)
-
--- TODO: use Lenses
 
 type FeedList = L.List String RssFeed
+type ArticleList = L.List String Article
+
+data UIBoxes = FeedsBox | ArticlesBox | ReadArticleBox
+  deriving (Eq, Show)
 
 data AppState = AppState
   { _feeds :: FeedList
-  , _selected :: Int
+  , _articles :: ArticleList
+  , _selectedArticle :: Article
+  , _focusedBox :: UIBoxes
   }
 
 makeLenses ''AppState
 
 makeFeedList :: RssFeedList -> L.List String RssFeed
-makeFeedList feeds =
-  L.list "" (Vec.fromList feeds) 1
+makeFeedList fs = L.list "" (Vec.fromList fs) 1
 
-drawFeed :: Bool -> RssFeed -> Widget String
-drawFeed isSelected f =
+drawUI :: AppState -> [Widget String]
+drawUI st = let focused = st ^. focusedBox in
+  case focused of
+    ReadArticleBox -> [border $ drawArticle $ st ^. selectedArticle]
+    _ -> [ hBox
+           [ borderIf focused FeedsBox $ hLimit 60
+             $ L.renderList drawFeedLinks (focused == FeedsBox) (st ^. feeds)
+           , borderIf focused ArticlesBox $ hLimit 60
+             $ L.renderList drawArticles (focused == ArticlesBox) (st ^. articles)
+           ]
+         ] where
+      borderIf f box w = if f == box then border w else padAll 1 w
+
+drawArticle :: Article -> Widget String
+drawArticle a = vBox [
+  withAttr L.listSelectedAttr $ str $ unpack $ articleTitle a
+  , hBorder
+  , str $ unpack $ articleContent a
+  ]
+
+drawArticles :: Bool -> Article -> Widget String
+drawArticles sel a =
+  let w = str (unpack $ articleTitle a)
+  in if sel
+       then withAttr L.listSelectedAttr w
+       else w
+
+drawFeedLinks :: Bool -> RssFeed -> Widget String
+drawFeedLinks isSelected f =
   let w = str (unpack $ rssFeedUrl f)
   in if isSelected
        then withAttr L.listSelectedAttr w
        else w
 
-drawUI :: AppState -> [Widget String]
-drawUI st =
-  [ border $
-      hLimit 60 $
-        L.renderList drawFeed True (_feeds st)
-  ]
-
-drawApp :: AppState -> [Widget String]
-drawApp s = [hCenter $ hBox [L.renderList drawFeed True (_feeds s)]]
-
 handleEvents :: BrickEvent String e -> EventM String AppState ()
 handleEvents (VtyEvent e) = case e of
     V.EvKey (V.KChar 'q') [] -> halt
+    V.EvKey x [] | x `elem` [V.KLeft, V.KRight]
+                   -> focusedBox %= toggleFocus
+      where
+        toggleFocus FeedsBox = ArticlesBox
+        toggleFocus ArticlesBox = FeedsBox
+        toggleFocus ReadArticleBox = ArticlesBox
+    V.EvKey V.KEnter [] -> do
+      f <- use focusedBox
+      case f of
+        ArticlesBox -> openSelectedArticle
+        _ -> return ()
+      where
+        openSelectedArticle = do
+          sel <- use articles
+          case  L.listSelectedElement sel of
+            Nothing -> pure ()
+            Just (_, art) -> do
+              selectedArticle .= art
+              focusedBox .= ReadArticleBox
     _ -> do
-        zoom feeds $ L.handleListEvent e
+      fb <- use focusedBox
+      case fb of
+        FeedsBox -> zoom feeds $ L.handleListEvent e
+        ArticlesBox -> zoom articles $ L.handleListEvent e
+        _ -> pure ()
 handleEvents _ = return ()
 
 app :: App AppState e String

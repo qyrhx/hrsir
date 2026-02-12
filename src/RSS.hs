@@ -4,11 +4,11 @@ module RSS where
 
 import Config
 import Data.Text (Text)
+import Network.HTTP.Req
 import Data.Maybe (fromJust, fromMaybe)
 import Text.Feed.Types (Feed, Item)
 import Text.Feed.Import (parseFeedSource)
 import Control.Applicative ((<|>))
-import Network.HTTP.Req
 import qualified Data.Text as T
 import qualified Text.Feed.Query as Q
 import qualified Data.ByteString.Lazy as LBS
@@ -24,7 +24,6 @@ data Article = Article
   , articleContent :: Text
   , articleRead :: Bool
   } deriving (Show, Eq)
-
 
 -- | Fetch an RSS feed from the given URL and return the raw XML.
 -- domain: for example "site.com"
@@ -53,7 +52,7 @@ splitUrl urlStr = do
   (dom, T.tail path)
 
 getAllFeeds :: Config -> IO RssFeedList
-getAllFeeds conf = mapM getFeed $ feedsUrls conf
+getAllFeeds conf = mapM (getFeed . T.pack) $ urls conf
   where
     getFeed :: Text -> IO RssFeed
     getFeed url = do

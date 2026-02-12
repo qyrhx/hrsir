@@ -4,12 +4,11 @@ module Config (Config(..), configFile, getConfig, writeConfig) where
 
 import System.Directory
 import GHC.Generics (Generic)
-import Data.Text (Text)
-import Data.Aeson (FromJSON, ToJSON, decode, encode)
+import Data.Aeson (FromJSON, ToJSON, encode, eitherDecode)
 import qualified Data.ByteString.Lazy.Char8 as BL
 
 data Config = Config {
-  feedsUrls :: [Text]
+  urls :: [String]
   } deriving (Show, Generic)
 
 instance FromJSON Config
@@ -20,10 +19,10 @@ configFile = do
   h <- getHomeDirectory
   return $ h ++ "/.config/hrsir_data.json"
 
-getConfig :: FilePath -> IO (Maybe Config)
+getConfig :: FilePath -> IO (Either String Config)
 getConfig path = do
   txt <- BL.readFile path
-  return $ decode txt
+  return $ eitherDecode txt
 
 writeConfig :: FilePath -> Config -> IO ()
 writeConfig path config = do
