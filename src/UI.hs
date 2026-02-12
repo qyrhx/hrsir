@@ -47,10 +47,13 @@ drawUI st = let focused = st ^. focusedBox in
 
 drawArticle :: Article -> Widget String
 drawArticle a = vBox [
-  withAttr L.listSelectedAttr $ str $ unpack $ articleTitle a
+  withAttr L.listSelectedAttr
+    $ padRight Max $ str $ unpack $ articleTitle a
   , hBorder
   , str $ unpack $ articleContent a
+  , fill ' '
   ]
+
 
 drawArticles :: Bool -> Article -> Widget String
 drawArticles sel a =
