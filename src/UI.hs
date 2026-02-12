@@ -37,9 +37,9 @@ drawUI st = let focused = st ^. focusedBox in
   case focused of
     ReadArticleBox -> [border $ drawArticle $ st ^. selectedArticle]
     _ -> [ hBox
-           [ borderIf focused FeedsBox $ hLimit 60
+           [ borderIf focused FeedsBox
              $ L.renderList drawFeedLinks (focused == FeedsBox) (st ^. feeds)
-           , borderIf focused ArticlesBox $ hLimit 60
+           , borderIf focused ArticlesBox
              $ L.renderList drawArticles (focused == ArticlesBox) (st ^. articles)
            ]
          ] where
