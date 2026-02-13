@@ -1,18 +1,13 @@
-{-# LANGUAGE DeriveGeneric #-}
+module Config
+  ( Config(..)
+  , configFile
+  , getConfig
+  , writeConfig) where
 
-module Config (Config(..), configFile, getConfig, writeConfig) where
-
+import Types
 import System.Directory
-import GHC.Generics (Generic)
-import Data.Aeson (FromJSON, ToJSON, encode, eitherDecode)
+import Data.Aeson (encode, eitherDecode)
 import qualified Data.ByteString.Lazy.Char8 as BL
-
-data Config = Config {
-  urls :: [String]
-  } deriving (Show, Generic)
-
-instance FromJSON Config
-instance ToJSON Config
 
 configFile :: IO FilePath
 configFile = do

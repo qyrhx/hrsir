@@ -1,7 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
 module Dummy where
 
-import RSS
+import Types
 
 dummyArticles :: [Article]
 dummyArticles =
@@ -9,25 +8,25 @@ dummyArticles =
     { articleTitle = "Haskell 9.10 Released"
     , articleContent = "Lots of performance improvements and new warnings."
     , articleRead = False
-    , articleUrl = "https://site.org/article.html"
+    , articleUrl = "https://unixdigest.com/articles/i-passionately-hate-hype-especially-the-ai-hype.html"
     }
   , Article
     { articleTitle = "'C++ is the best language of all time', declares a courageous man."
     , articleContent = "Says he loves to live on the edge"
     , articleRead = False
-    , articleUrl = "https://site.org/article.html"
+    , articleUrl = "https://motherfuckingwebsite.com/"
     }
   , Article
     { articleTitle = "Rust Dev Discovers Monads"
     , articleContent = "Claims it is 'just like Option but scary'."
     , articleRead = False
-    , articleUrl = "https://site.org/article.html"
+    , articleUrl = "https://perfectmotherfuckingwebsite.com/"
     }
   , Article
     { articleTitle = "Programmer Refactors For Fun, Regrets Everything"
     , articleContent = "Spent 6 hours, gained 0 features, but code is now 'clean'."
     , articleRead = True
-    , articleUrl = "https://site.org/article.html"
+    , articleUrl = "https://thebestmotherfucking.website/"
     }
   ]
 

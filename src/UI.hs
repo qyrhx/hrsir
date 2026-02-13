@@ -1,31 +1,18 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module UI where
 
+import Types
 import RSS
 import Brick
+import System.Process
 import Data.Text (unpack)
 import Brick.Widgets.Border
-import Lens.Micro ((^.))
+import Lens.Micro
 import Lens.Micro.TH (makeLenses)
 import Lens.Micro.Mtl ((%=), (.=), use)
-import qualified Brick.Widgets.List as L
+import Control.Monad.IO.Class (liftIO)
 import qualified Graphics.Vty as V
 import qualified Data.Vector as Vec
-
-type FeedList = L.List String RssFeed
-type ArticleList = L.List String Article
-
-data UIBoxes = FeedsBox | ArticlesBox | ReadArticleBox
-  deriving (Eq, Show)
-
-data AppState = AppState
-  { _feeds :: FeedList
-  , _articles :: ArticleList
-  , _selectedArticle :: Article
-  , _focusedBox :: UIBoxes
-  }
+import qualified Brick.Widgets.List as L
 
 makeLenses ''AppState
 
@@ -54,7 +41,6 @@ drawArticle a = vBox [
   , fill ' '
   ]
 
-
 drawArticles :: Bool -> Article -> Widget String
 drawArticles sel a =
   let w = str (unpack $ articleTitle a)
@@ -69,9 +55,21 @@ drawFeedLinks isSelected f =
        then withAttr L.listSelectedAttr w
        else w
 
+-- Linux only, uses xdg
+openInExternalBrowser :: String -> IO ()
+openInExternalBrowser url = do
+  _ <- createProcess (proc "xdg-open" [url])
+       { std_out = NoStream
+       , std_err = NoStream
+       }
+
+  pure ()
+
 handleEvents :: BrickEvent String e -> EventM String AppState ()
 handleEvents (VtyEvent e) = case e of
-    V.EvKey (V.KChar 'q') [] -> halt
+    V.EvKey (V.KChar 'q') [] -> do
+      -- TODO: update config
+      halt
     V.EvKey x [] | x `elem` [V.KLeft, V.KRight]
                    -> focusedBox %= toggleFocus
       where
@@ -82,6 +80,10 @@ handleEvents (VtyEvent e) = case e of
       f <- use focusedBox
       case f of
         ArticlesBox -> openSelectedArticle
+        ReadArticleBox -> do
+          a <- use selectedArticle
+          _ <- liftIO $ openInExternalBrowser $ unpack $ articleUrl a
+          return ()
         _ -> return ()
       where
         openSelectedArticle = do

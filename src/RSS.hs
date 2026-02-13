@@ -1,7 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module RSS where
 
+import Types
 import Config
 import Data.Text (Text)
 import Network.HTTP.Req
@@ -12,18 +11,6 @@ import Control.Applicative ((<|>))
 import qualified Data.Text as T
 import qualified Text.Feed.Query as Q
 import qualified Data.ByteString.Lazy as LBS
-
-type RssFeedList = [RssFeed]
-data RssFeed = RssFeed
-  { rssFeedUrl :: Text
-  , rssFeedArticles :: [Article]
-  } deriving (Show, Eq)
-data Article = Article
-  { articleTitle :: Text
-  , articleUrl :: Text
-  , articleContent :: Text
-  , articleRead :: Bool
-  } deriving (Show, Eq)
 
 -- | Fetch an RSS feed from the given URL and return the raw XML.
 -- domain: for example "site.com"
@@ -38,7 +25,6 @@ getRssFeed domain path = runReq defaultHttpConfig $ do
        lbsResponse -- specify how to interpret response
        mempty -- query params, headers, explicit port number, etc.
   pure $ responseBody r
-
 
 parseFeed :: LBS.ByteString -> Maybe Feed
 parseFeed = parseFeedSource

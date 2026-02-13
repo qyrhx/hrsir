@@ -7,6 +7,7 @@ cabal-version: 1.12
 name:           hrsir
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/qyrhx/hrsir#readme>
+category:       rss, terminal
 homepage:       https://github.com/qyrhx/hrsir#readme
 bug-reports:    https://github.com/qyrhx/hrsir/issues
 author:         qyrhx
@@ -28,12 +29,17 @@ library
       Config
       Dummy
       RSS
+      Types
       UI
   other-modules:
       Paths_hrsir
   hs-source-dirs:
       src
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  default-extensions:
+      OverloadedStrings
+      DeriveGeneric
+      TemplateHaskell
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wunused-imports
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -44,12 +50,11 @@ library
     , microlens
     , microlens-mtl
     , microlens-th
-    , network-uri
+    , process
     , req
     , text
     , vector
     , vty
-    , xml-types
   default-language: Haskell2010
 
 executable hrsir-exe
@@ -58,7 +63,11 @@ executable hrsir-exe
       Paths_hrsir
   hs-source-dirs:
       app
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  default-extensions:
+      OverloadedStrings
+      DeriveGeneric
+      TemplateHaskell
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wunused-imports -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -70,10 +79,9 @@ executable hrsir-exe
     , microlens
     , microlens-mtl
     , microlens-th
-    , network-uri
+    , process
     , req
     , text
     , vector
     , vty
-    , xml-types
   default-language: Haskell2010

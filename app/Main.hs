@@ -1,13 +1,13 @@
-{-# LANGUAGE OverloadedStrings #-}
 module Main (main) where
 
+import Types
 import RSS
 import UI
 import Dummy
 import Config
-import Control.Monad (void)
-import Brick (defaultMain)
 import Lens.Micro ((^.))
+import Brick (defaultMain)
+import Control.Monad (void)
 import qualified Data.Vector as Vec
 import qualified Brick.Widgets.List as L
 
