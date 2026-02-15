@@ -1,18 +1,10 @@
-module Types
-  ( Config(..)
-  , FeedList
-  , ArticleList
-  , UIBoxes(..)
-  , RssFeedList
-  , RssFeed(..)
-  , Article(..)
-  , AppState(..)
-  ) where
+module Types where
 
 import Data.Text
 import GHC.Generics (Generic)
 import Brick.Widgets.List (List)
 import Data.Aeson (FromJSON, ToJSON)
+import Lens.Micro.TH (makeLenses)
 
 data Config = Config
   { urls :: [String]
@@ -40,9 +32,16 @@ data Article = Article
   , articleRead :: Bool
   } deriving (Show, Eq)
 
+data CMDData = None | Message Text | Err Text | Input Text
+data AppMode = Normal | Command
+
 data AppState = AppState
-  { _feeds :: FeedList
+  { _mode :: AppMode
+  , _feeds :: FeedList
   , _articles :: ArticleList
   , _selectedArticle :: Article
   , _focusedBox :: UIBoxes
+  , _cmd :: CMDData
   } deriving (Generic)
+
+makeLenses ''AppState

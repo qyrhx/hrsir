@@ -23,10 +23,12 @@ main = do
   let fs = replicate 8 dummyFeed
 
   let initState = AppState {
-        _feeds = makeFeedList fs
+        _mode = Normal
+        , _feeds = makeFeedList fs
         , _focusedBox = FeedsBox
         , _articles = (L.list "X" (Vec.fromList $ rssFeedArticles $ head fs) 1)
         , _selectedArticle = head $ rssFeedArticles $ head fs
+        , _cmd = None
         }
   void $ defaultMain app initState
 
