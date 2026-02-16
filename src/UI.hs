@@ -13,6 +13,9 @@ import qualified Brick.Widgets.List as L
 errorAttr :: AttrName
 errorAttr = attrName "error"
 
+msgAttr :: AttrName
+msgAttr = attrName "msg"
+
 makeFeedList :: RssFeedList -> L.List String RssFeed
 makeFeedList fs = L.list "" (Vec.fromList fs) 1
 
@@ -23,9 +26,9 @@ drawUI st = [vBox [drawMainUI st
 drawCMD :: AppState -> Widget String
 drawCMD st = case st ^. cmd  of
   None -> fill ' '
-  Message msg -> str $ unpack msg
-  Err msg -> withAttr errorAttr $ str $ unpack msg
-  Input t -> str $ ": " ++ unpack t
+  Message msg -> withAttr msgAttr $ str $ " " ++ unpack msg
+  Err msg -> withAttr errorAttr $ str $ " " ++ unpack msg
+  Input t -> hBox [str $ ":" ++ unpack t, withAttr L.listSelectedAttr $ str " "]
 
 drawMainUI :: AppState -> Widget String
 drawMainUI st = let focused = st ^. focusedBox in
@@ -71,6 +74,6 @@ app = App
   , appAttrMap      = const $ attrMap V.defAttr
     [ (L.listSelectedAttr, V.black `on` V.white)
     , (errorAttr, fg V.red)
-    , (errorAttr, fg V.red)
+    , (msgAttr, fg V.yellow)
     ]
   }

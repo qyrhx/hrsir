@@ -35,6 +35,9 @@ handleCommandModeEvent (VtyEvent e) = case e of
      where
        pushChar (Input t) = Input $ T.snoc t c
        pushChar _ = error "WTF"
+   V.EvKey V.KBS [] -> cmd %= delIfInput
+     where delIfInput (Input t) = Input (T.dropEnd 1 t)
+           delIfInput x = x
    _ -> pure ()
 handleCommandModeEvent _ = pure ()
 
