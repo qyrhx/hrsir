@@ -1,13 +1,15 @@
 module Config
-  ( Config(..)
-  , configFile
-  , getConfig
-  , writeConfig) where
+  ( Config (..),
+    configFile,
+    getConfig,
+    writeConfig,
+  )
+where
 
-import Types
-import System.Directory
-import Data.Aeson (encode, eitherDecode)
+import Data.Aeson (eitherDecode, encode)
 import qualified Data.ByteString.Lazy.Char8 as BL
+import System.Directory
+import Types
 
 configFile :: IO FilePath
 configFile = do
