@@ -2,6 +2,7 @@ module Event where
 
 import Brick
 import qualified Brick.Widgets.List as L
+import Config
 import Control.Monad.IO.Class (liftIO)
 import Data.Char (isPrint)
 import Data.Maybe (fromJust)
@@ -10,6 +11,7 @@ import qualified Data.Vector as Vec
 import qualified Graphics.Vty as V
 import Lens.Micro
 import Lens.Micro.Mtl
+import RSS
 import System.Process
 import Types
 
@@ -59,10 +61,13 @@ handleCommandModeEvent (VtyEvent (V.EvKey e [])) =
                in case w of
                     -- TODO: input validation
                     "add" -> do
-                      modify (config . feedUrls %~ (++ [T.unpack $ head ws]))
+                      let u = head ws
+                      modify (config . feedUrls %~ (++ [T.unpack u]))
+                      f <- liftIO $ fetchFeed u
+                      feeds %= \lst ->
+                        L.listInsert (Vec.length (L.listElements lst)) f lst
                       cmd .= None
                       mode .= Normal
-                    -- TODO
                     _ -> cmd .= Err "Unknown Command"
         _ -> pure ()
 handleCommandModeEvent _ = pure ()
@@ -70,10 +75,18 @@ handleCommandModeEvent _ = pure ()
 handleNormalModeEvent :: BrickEvent String e -> EventM String AppState ()
 handleNormalModeEvent (VtyEvent kEv@(V.EvKey e [])) =
   case e of
-    -- TODO: update config
-    V.KChar 'q' -> halt
+    V.KChar 'q' -> do
+      c <- use config
+      cFile <- liftIO $ configFile
+      liftIO $ writeConfig cFile c
+      halt
     V.KChar 'e' -> cmd .= Err "YO!!!!!! FILE DOES NOT EXIST"
     V.KChar 'm' -> cmd .= Message "File does exist!"
+    V.KEsc -> do
+      b <- use focusedBox
+      case b of
+        ReadArticleBox -> focusedBox .= FeedsBox
+        _ -> pure ()
     V.KChar ':' -> do
       mode .= Command
       cmd .= Input ""

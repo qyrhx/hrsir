@@ -42,18 +42,18 @@ getAllArticles :: RssFeedList -> [Article]
 getAllArticles = concatMap rssFeedArticles
 
 fetchAllFeeds :: Config -> IO RssFeedList
-fetchAllFeeds conf = mapM (getFeed . T.pack) $ _feedUrls conf
-  where
-    getFeed :: Text -> IO RssFeed
-    getFeed url = do
-      let (domain, path) = splitUrl url
-      f <- getRssFeed domain path
-      let f' = fromJust $ parseFeed f
-      pure
-        RssFeed
-          { rssFeedUrl = url,
-            rssFeedArticles = articlesFromFeed f'
-          }
+fetchAllFeeds conf = mapM (fetchFeed . T.pack) $ _feedUrls conf
+
+fetchFeed :: Text -> IO RssFeed
+fetchFeed url = do
+  let (domain, path) = splitUrl url
+  f <- getRssFeed domain path
+  let f' = fromJust $ parseFeed f
+  pure
+    RssFeed
+      { rssFeedUrl = url,
+        rssFeedArticles = articlesFromFeed f'
+      }
 
 articlesFromFeed :: Feed -> [Article]
 articlesFromFeed f = map makeArticle $ Q.feedItems f

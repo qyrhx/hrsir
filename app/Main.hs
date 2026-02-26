@@ -5,8 +5,6 @@ import qualified Brick.Widgets.List as L
 import Config
 import Control.Monad (void)
 import qualified Data.Vector as Vec
-import Dummy
-import Lens.Micro ((^.))
 import RSS
 import Types
 import UI
