@@ -40,17 +40,17 @@ drawMainUI :: AppState -> Widget String
 drawMainUI st =
   let focused = st ^. focusedBox
    in case focused of
-        ReadArticleBox -> border $ drawArticle $ st ^. selectedArticle
+        ReadArticleBox -> border $ padAll 1 $ drawArticle $ st ^. selectedArticle
         _ ->
           hBox
-            [ borderIf focused FeedsBox $
-                L.renderList drawFeedLinks (focused == FeedsBox) (st ^. feeds),
-              borderIf focused ArticlesBox $
+            [ borderIfFocused FeedsBox $
+                L.renderListWithIndex drawFeedLinks (focused == FeedsBox) (st ^. feeds),
+              borderIfFocused ArticlesBox $
                 L.renderList drawArticles (focused == ArticlesBox) $
                   (st ^. articles)
             ]
           where
-            borderIf f box w = if f == box then border w else padAll 1 w
+            borderIfFocused box w = if focused == box then border w else padAll 1 w
 
 articlesOfSelectedFeed :: AppState -> ArticleList
 articlesOfSelectedFeed st =
@@ -73,9 +73,9 @@ drawArticles sel a =
   let w = str (unpack $ articleTitle a)
    in if sel then withAttr L.listSelectedAttr w else w
 
-drawFeedLinks :: Bool -> RssFeed -> Widget String
-drawFeedLinks isSelected f =
-  let w = str (unpack $ rssFeedUrl f)
+drawFeedLinks :: Int -> Bool -> RssFeed -> Widget String
+drawFeedLinks idx isSelected f =
+  let w = str $ show (1 + idx) ++ " - " ++ (unpack . rssFeedUrl $ f)
    in if isSelected
         then withAttr L.listSelectedAttr w
         else w
