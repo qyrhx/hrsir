@@ -49,7 +49,6 @@ execCmd c =
       quitCmdMode
       cmd .= (Err errMsg)
     Right (command, arg) -> case command of
-      -- TODO: input validation
       "add" -> addFeedToConfig arg
       "del" -> deleteFeedFromConfig arg
       _ -> cmd .= Err "Unknown Command"
@@ -65,17 +64,14 @@ validateCmdInput (x : xs) = case x of
 handleNormalModeEvent :: BrickEvent String e -> EventM String AppState ()
 handleNormalModeEvent (VtyEvent kEv@(V.EvKey e [])) =
   case e of
-    V.KChar 'q' -> do
-      c <- use config
-      cFile <- liftIO $ configFile
-      liftIO $ writeConfig cFile c
-      halt
+    V.KChar 'q' -> saveAndQuit
     V.KEsc -> do
       b <- use focusedBox
       case b of
         ReadArticleBox -> focusedBox .= FeedsBox
         _ -> pure ()
     V.KChar ':' -> do
+      -- Switch to command mode
       mode .= Command
       cmd .= Input ""
     x
@@ -106,10 +102,7 @@ handleNormalModeEvent (VtyEvent kEv@(V.EvKey e [])) =
       case fb of
         FeedsBox -> do
           zoom feeds $ L.handleListEvent kEv
-          fs <- use feeds
-          let (_, f) = fromJust $ L.listSelectedElement fs
-              as = rssFeedArticles f
-          articles .= L.list "X" (Vec.fromList as) 1
+          updateSelectedArticles
         ArticlesBox -> zoom articles $ L.handleListEvent kEv
         _ -> pure ()
 handleNormalModeEvent _ = pure ()
@@ -138,8 +131,7 @@ deleteFeedFromConfig u = do
     else do
       feeds %= L.listRemove idx
       modify (config . feedUrls %~ deleteAtIdx idx)
-      fs' <- use feeds
-      articles .= updateArticles fs'
+      updateSelectedArticles
       quitCmdMode
   where
     deleteAtIdx i l = let (f, r) = splitAt i l in f ++ (safeTail r)
@@ -147,10 +139,19 @@ deleteFeedFromConfig u = do
     safeTail [] = []
     safeTail (_ : xs) = xs
 
-    updateArticles fs = do
-      case L.listSelectedElement fs of
-        Nothing -> L.list "X" (Vec.fromList []) 1
-        Just (_, f) -> L.list "X" (Vec.fromList $ rssFeedArticles f) 1
+updateSelectedArticles :: EventM String AppState ()
+updateSelectedArticles = do
+  fs <- use feeds
+  let (_, f) = fromJust $ L.listSelectedElement fs
+      as = rssFeedArticles f
+  articles .= L.list "X" (Vec.fromList as) 1
+
+saveAndQuit :: EventM n AppState ()
+saveAndQuit = do
+  c <- use config
+  cFile <- liftIO $ configFile
+  liftIO $ writeConfig cFile c
+  halt
 
 -- Linux only, uses xdg
 openInExternalBrowser :: String -> IO ()
