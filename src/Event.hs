@@ -114,12 +114,19 @@ quitCmdMode = do
   cmd .= None
 
 addFeedToConfig :: T.Text -> EventM String AppState ()
-addFeedToConfig u = do
-  modify (config . feedUrls %~ (++ [T.unpack u]))
-  f <- liftIO $ fetchFeed u
-  feeds %= \lst ->
-    L.listInsert (Vec.length (L.listElements lst)) f lst
-  quitCmdMode
+addFeedToConfig url = do
+  fs <- use $ config . feedUrls
+  let url' = T.unpack url
+  if url' `elem` fs
+    then do
+      quitCmdMode
+      cmd .= Err "Already exists"
+    else do
+      modify (config . feedUrls %~ (++ [url']))
+      f <- liftIO $ fetchFeed url
+      feeds %= \lst ->
+        L.listInsert (Vec.length (L.listElements lst)) f lst
+      quitCmdMode
 
 deleteFeedFromConfig :: T.Text -> EventM String AppState ()
 deleteFeedFromConfig idxTxt = do
@@ -129,18 +136,18 @@ deleteFeedFromConfig idxTxt = do
       cmd .= Err "Usage: del [index]"
     Just idx -> do
       fs <- use feeds
-      if idx >= (Vec.length $ L.listElements fs)
+      if (idx - 1) >= (Vec.length $ L.listElements fs)
         then do
           quitCmdMode
           cmd .= Err "Out of Range Index"
         else do
-          feeds %= L.listRemove idx
-      modify (config . feedUrls %~ deleteAtIdx idx)
-      updateSelectedArticles
-      quitCmdMode
+          let idx' = idx - 1
+          feeds %= L.listRemove idx'
+          modify (config . feedUrls %~ deleteAtIdx idx')
+          updateSelectedArticles
+          quitCmdMode
   where
-    deleteAtIdx i l = let (f, r) = splitAt i l in f ++ (safeTail r)
-
+    deleteAtIdx i l = let (f, r) = splitAt i l in f ++ safeTail r
     safeTail [] = []
     safeTail (_ : xs) = xs
 
@@ -148,8 +155,8 @@ updateSelectedArticles :: EventM String AppState ()
 updateSelectedArticles = do
   fs <- use feeds
   let (_, f) = fromJust $ L.listSelectedElement fs
-      as = rssFeedArticles f
-  articles .= L.list "X" (Vec.fromList as) 1
+      xs = rssFeedArticles f
+  articles .= L.list "X" (Vec.fromList xs) 1
 
 saveAndQuit :: EventM n AppState ()
 saveAndQuit = do
