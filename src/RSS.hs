@@ -1,4 +1,12 @@
-module RSS where
+module RSS
+  ( articlesFromFeed,
+    fetchAllFeeds,
+    fetchFeed,
+    getAllArticles,
+    getRssFeed,
+    parseFeed,
+  )
+where
 
 import Control.Applicative ((<|>))
 import qualified Data.ByteString.Lazy as LBS

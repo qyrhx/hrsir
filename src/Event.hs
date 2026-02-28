@@ -1,18 +1,19 @@
-module Event where
+module Event (handleEvents) where
 
-import Brick
+import Brick (BrickEvent (VtyEvent), EventM, halt, modify, zoom)
 import qualified Brick.Widgets.List as L
-import Config
+import Config (configFile, writeConfig)
 import Control.Monad.IO.Class (liftIO)
 import Data.Char (isPrint)
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import qualified Data.Vector as Vec
 import qualified Graphics.Vty as V
-import Lens.Micro
-import Lens.Micro.Mtl
-import RSS
+import Lens.Micro ((%~))
+import Lens.Micro.Mtl (use, (%=), (.=))
+import RSS (fetchFeed)
 import System.Process
+import Text.Read (readMaybe)
 import Types
 
 handleEvents :: BrickEvent String e -> EventM String AppState ()
@@ -121,15 +122,19 @@ addFeedToConfig u = do
   quitCmdMode
 
 deleteFeedFromConfig :: T.Text -> EventM String AppState ()
-deleteFeedFromConfig u = do
-  let idx = (read $ T.unpack u) - 1 :: Int
-  fs <- use feeds
-  if idx >= (Vec.length $ L.listElements fs)
-    then do
+deleteFeedFromConfig idxTxt = do
+  case readMaybe $ T.unpack idxTxt :: Maybe Int of
+    Nothing -> do
       quitCmdMode
-      cmd .= Err "Out of Range Index"
-    else do
-      feeds %= L.listRemove idx
+      cmd .= Err "Usage: del [index]"
+    Just idx -> do
+      fs <- use feeds
+      if idx >= (Vec.length $ L.listElements fs)
+        then do
+          quitCmdMode
+          cmd .= Err "Out of Range Index"
+        else do
+          feeds %= L.listRemove idx
       modify (config . feedUrls %~ deleteAtIdx idx)
       updateSelectedArticles
       quitCmdMode

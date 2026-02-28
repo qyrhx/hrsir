@@ -29,6 +29,7 @@ library
       Config
       Dummy
       Event
+      Hrsir
       RSS
       Types
       UI

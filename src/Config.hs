@@ -22,6 +22,6 @@ getConfig path = do
   return $ eitherDecode txt
 
 writeConfig :: FilePath -> Config -> IO ()
-writeConfig path config = do
-  BL.writeFile path $ encode config
+writeConfig path cfg = do
+  BL.writeFile path $ encode cfg
   return ()

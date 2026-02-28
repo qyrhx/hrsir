@@ -1,22 +1,22 @@
-module UI where
+module UI
+  ( app,
+    articlesOfSelectedFeed,
+    drawUI,
+    makeFeedList,
+  )
+where
 
 import Brick
 import Brick.Widgets.Border (border, hBorder)
 import Brick.Widgets.List (listSelectedElement)
 import qualified Brick.Widgets.List as L
 import Data.Maybe (fromJust)
-import Data.Text (unpack)
+import qualified Data.Text as T
 import qualified Data.Vector as Vec
 import Event
 import qualified Graphics.Vty as V
 import Lens.Micro ((^.))
 import Types
-
-errorAttr :: AttrName
-errorAttr = attrName "error"
-
-msgAttr :: AttrName
-msgAttr = attrName "msg"
 
 makeFeedList :: RssFeedList -> L.List String RssFeed
 makeFeedList fs = L.list "" (Vec.fromList fs) 1
@@ -32,9 +32,9 @@ drawUI st =
 drawCMD :: AppState -> Widget String
 drawCMD st = case st ^. cmd of
   None -> fill ' '
-  Message msg -> withAttr msgAttr $ str $ " " ++ unpack msg
-  Err msg -> withAttr errorAttr $ str $ " " ++ unpack msg
-  Input t -> hBox [str $ ":" ++ unpack t, withAttr L.listSelectedAttr $ str " "]
+  Message msg -> withAttr msgAttr $ txt $ " " <> msg
+  Err msg -> withAttr errorAttr $ txt $ " " <> msg
+  Input t -> hBox [txt $ ":" <> t, withAttr L.listSelectedAttr $ txt " "]
 
 drawMainUI :: AppState -> Widget String
 drawMainUI st =
@@ -62,23 +62,26 @@ articlesOfSelectedFeed st =
 drawArticle :: Article -> Widget String
 drawArticle a =
   vBox
-    [ withAttr L.listSelectedAttr $ padRight Max $ str $ unpack $ articleTitle a,
+    [ withAttr L.listSelectedAttr $ padRight Max $ txtWrap $ articleTitle a,
       hBorder,
-      str $ unpack $ articleContent a,
+      txtWrap $ articleContent a,
       fill ' '
     ]
 
 drawArticles :: Bool -> Article -> Widget String
-drawArticles sel a =
-  let w = str (unpack $ articleTitle a)
-   in if sel then withAttr L.listSelectedAttr w else w
+drawArticles _ a = txt $ articleTitle a
 
 drawFeedLinks :: Int -> Bool -> RssFeed -> Widget String
-drawFeedLinks idx isSelected f =
-  let w = str $ show (1 + idx) ++ " - " ++ (unpack . rssFeedUrl $ f)
-   in if isSelected
-        then withAttr L.listSelectedAttr w
-        else w
+drawFeedLinks idx _ f = txt $ T.show (1 + idx) <> " - " <> (rssFeedUrl f)
+
+errorAttr :: AttrName
+errorAttr = attrName "error"
+
+msgAttr :: AttrName
+msgAttr = attrName "msg"
+
+boldAttr :: AttrName
+boldAttr = attrName "bold"
 
 app :: App AppState e String
 app =
@@ -93,6 +96,7 @@ app =
             V.defAttr
             [ (L.listSelectedAttr, V.black `on` V.white),
               (errorAttr, fg V.red),
-              (msgAttr, fg V.yellow)
+              (msgAttr, fg V.yellow),
+              (boldAttr, V.defAttr `V.withStyle` V.bold)
             ]
     }
