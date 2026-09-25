@@ -11,6 +11,9 @@ data Config = Config
   }
   deriving (Show, Generic)
 
+defaultConfig :: Config
+defaultConfig = Config { _feedUrls = [] }
+
 instance FromJSON Config
 
 instance ToJSON Config

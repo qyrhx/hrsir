@@ -9,6 +9,9 @@ where
 import Data.Aeson (eitherDecode, encode)
 import qualified Data.ByteString.Lazy.Char8 as BL
 import System.Directory
+import Control.Exception (tryJust)
+import Control.Monad (guard)
+import System.IO.Error (isDoesNotExistError)
 import Types
 
 configFile :: IO FilePath
@@ -18,8 +21,10 @@ configFile = do
 
 getConfig :: FilePath -> IO (Either String Config)
 getConfig path = do
-  txt <- BL.readFile path
-  return $ eitherDecode txt
+  result <- tryJust (guard . isDoesNotExistError) (BL.readFile path)
+  case result of
+    Left ()   -> pure (Right defaultConfig)
+    Right txt -> pure (eitherDecode txt)
 
 writeConfig :: FilePath -> Config -> IO ()
 writeConfig path cfg = do

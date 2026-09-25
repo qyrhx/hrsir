@@ -54,10 +54,9 @@ drawMainUI st =
 
 articlesOfSelectedFeed :: AppState -> ArticleList
 articlesOfSelectedFeed st =
-  let fs = st ^. feeds
-      (_, f) = fromJust $ listSelectedElement fs
-      as = rssFeedArticles f
-   in (L.list "X" (Vec.fromList as) 1)
+  case listSelectedElement (st ^. feeds) of
+    Just (_, f) -> L.list "X" (Vec.fromList $ rssFeedArticles f) 1
+    Nothing     -> L.list "X" Vec.empty 1
 
 drawArticle :: Article -> Widget String
 drawArticle a =
