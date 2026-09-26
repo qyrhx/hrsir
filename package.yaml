@@ -31,6 +31,7 @@ dependencies:
 - brick
 - vty
 - req
+- modern-uri
 - microlens
 - microlens-mtl
 - microlens-th

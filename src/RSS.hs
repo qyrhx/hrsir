@@ -1,3 +1,5 @@
+{-# LANGUAGE DataKinds #-}
+
 module RSS
   ( articlesFromFeed,
     fetchAllFeeds,
@@ -10,58 +12,48 @@ where
 
 import Control.Applicative ((<|>))
 import qualified Data.ByteString.Lazy as LBS
-import Data.Maybe (fromJust, fromMaybe)
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Network.HTTP.Req
 import Text.Feed.Import (parseFeedSource)
 import qualified Text.Feed.Query as Q
 import Text.Feed.Types (Feed, Item)
+import qualified Text.URI as URI
 import Types
 
--- | Fetch an RSS feed from the given URL and return the raw XML.
--- domain: for example "site.com"
--- path: for example "en/rss"
--- together "site.com/en/rss"
+fetchFeed :: Text -> IO RssFeed
+fetchFeed url = do
+  rawXml <- fetchUrlByteString url
+  case parseFeed rawXml of
+    Just f ->
+      pure
+        RssFeed
+          { rssFeedUrl = url,
+            rssFeedArticles = articlesFromFeed f
+          }
+    Nothing -> error $ "Failed to parse feed XML from: " <> T.unpack url
+
+fetchUrlByteString :: Text -> IO LBS.ByteString
+fetchUrlByteString urlStr = runReq defaultHttpConfig $ do
+  uri <- URI.mkURI urlStr
+  case useHttpsURI uri of
+    Just (url, opts) -> responseBody <$> req GET url NoReqBody lbsResponse opts
+    Nothing -> case useHttpURI uri of
+      Just (url, opts) -> responseBody <$> req GET url NoReqBody lbsResponse opts
+      Nothing -> error $ "Invalid or unsupported HTTP(S) URL: " <> T.unpack urlStr
+
 getRssFeed :: Text -> Text -> IO LBS.ByteString
-getRssFeed domain path = runReq defaultHttpConfig $ do
-  r <-
-    req
-      GET -- method
-      (http domain /: path) -- safe by construction URL
-      NoReqBody
-      lbsResponse -- specify how to interpret response
-      mempty -- query params, headers, explicit port number, etc.
-  pure $ responseBody r
+getRssFeed domain path = fetchUrlByteString ("https://" <> domain <> "/" <> path)
 
 parseFeed :: LBS.ByteString -> Maybe Feed
 parseFeed = parseFeedSource
-
--- | Splits a URL into (domain, path)
-splitUrl :: Text -> (Text, Text)
-splitUrl urlStr = do
-  let removedPrefixUrl =
-        fromMaybe urlStr $
-          T.stripPrefix "https://" urlStr <|> T.stripPrefix "http://" urlStr
-  let (dom, path) = T.break (== '/') removedPrefixUrl
-  (dom, T.tail path)
 
 getAllArticles :: RssFeedList -> [Article]
 getAllArticles = concatMap rssFeedArticles
 
 fetchAllFeeds :: Config -> IO RssFeedList
 fetchAllFeeds conf = mapM (fetchFeed . T.pack) $ _feedUrls conf
-
-fetchFeed :: Text -> IO RssFeed
-fetchFeed url = do
-  let (domain, path) = splitUrl url
-  f <- getRssFeed domain path
-  let f' = fromJust $ parseFeed f
-  pure
-    RssFeed
-      { rssFeedUrl = url,
-        rssFeedArticles = articlesFromFeed f'
-      }
 
 articlesFromFeed :: Feed -> [Article]
 articlesFromFeed f = map makeArticle $ Q.feedItems f

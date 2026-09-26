@@ -12,6 +12,7 @@ import Lens.Micro ((%~))
 import Lens.Micro.Mtl (use, (%=), (.=))
 import RSS (fetchFeed)
 import System.Process
+import System.Exit (exitSuccess)
 import Text.Read (readMaybe)
 import Types
 
@@ -51,11 +52,14 @@ execCmd c =
     Right (command, arg) -> case command of
       "add" -> addFeedToConfig arg
       "del" -> deleteFeedFromConfig arg
+      "q"   -> saveAndQuit
+      "quit" -> saveAndQuit
       _ -> cmd .= Err "Unknown Command"
 
 validateCmdInput :: [T.Text] -> Either T.Text (T.Text, T.Text)
 validateCmdInput [] = Left "Nothing"
 validateCmdInput (x : xs) = case x of
+  c | c `elem` ["q", "quit"] -> Right (x, "")
   c | c `elem` ["add", "del"] -> case xs of
     [] -> Left "Missing arguments"
     (y : _) -> Right (x, y)

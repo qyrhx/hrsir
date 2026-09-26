@@ -57,12 +57,22 @@ drawMainUI st =
 
 drawEmptyState :: Widget String
 drawEmptyState =
-  border $ center $
+  border $
+    center $
       vBox
-        [ withAttr boldAttr $ txt "No feeds added yet!",
+        [ withAttr boldAttr $ txt "No feeds available!",
           str " ",
-          txt "Type ':add <url>' to add a new RSS feed.",
-          txt "Type 'q' to quit."
+          txt "Commands:",
+          txt "  :add <url> - Add a new RSS feed",
+          txt "  :del <idx> - Delete a feed by index",
+          txt "  :q         - Quit application",
+          str " ",
+          txt "Navigation & Controls:",
+          txt "  Left / Right Arrow - Switch panel focus",
+          txt "  Up / Down Arrow   - Navigate lists",
+          txt "  Enter             - Read article / Open URL in default browser",
+          txt "  Esc               - Exit article view or command mode",
+          txt "  q                 - Quit application"
         ]
 
 articlesOfSelectedFeed :: AppState -> ArticleList
