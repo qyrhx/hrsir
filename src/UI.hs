@@ -8,9 +8,8 @@ where
 
 import Brick
 import Brick.Widgets.Border (border, hBorder)
-import Brick.Widgets.List (listSelectedElement)
+import Brick.Widgets.Center (center)
 import qualified Brick.Widgets.List as L
-import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import qualified Data.Vector as Vec
 import Event
@@ -38,25 +37,39 @@ drawCMD st = case st ^. cmd of
 
 drawMainUI :: AppState -> Widget String
 drawMainUI st =
-  let focused = st ^. focusedBox
-   in case focused of
-        ReadArticleBox -> border $ padAll 1 $ drawArticle $ st ^. selectedArticle
-        _ ->
-          hBox
-            [ borderIfFocused FeedsBox $
-                L.renderListWithIndex drawFeedLinks (focused == FeedsBox) (st ^. feeds),
-              borderIfFocused ArticlesBox $
-                L.renderList drawArticles (focused == ArticlesBox) $
-                  (st ^. articles)
-            ]
-          where
-            borderIfFocused box w = if focused == box then border w else padAll 1 w
+  let fs = st ^. feeds
+      focused = st ^. focusedBox
+   in if null (L.listElements fs)
+        then drawEmptyState
+        else case focused of
+          ReadArticleBox -> border $ padAll 1 $ drawArticle $ st ^. selectedArticle
+          _ ->
+            hBox
+              [ borderIfFocused FeedsBox $
+                  L.renderListWithIndex drawFeedLinks (focused == FeedsBox) fs,
+                borderIfFocused ArticlesBox $
+                  L.renderList drawArticles (focused == ArticlesBox) (st ^. articles)
+              ]
+  where
+    borderIfFocused box w =
+      let focused = st ^. focusedBox
+       in if focused == box then border w else padAll 1 w
+
+drawEmptyState :: Widget String
+drawEmptyState =
+  border $ center $
+      vBox
+        [ withAttr boldAttr $ txt "No feeds added yet!",
+          str " ",
+          txt "Type ':add <url>' to add a new RSS feed.",
+          txt "Type 'q' to quit."
+        ]
 
 articlesOfSelectedFeed :: AppState -> ArticleList
 articlesOfSelectedFeed st =
-  case listSelectedElement (st ^. feeds) of
+  case L.listSelectedElement (st ^. feeds) of
     Just (_, f) -> L.list "X" (Vec.fromList $ rssFeedArticles f) 1
-    Nothing     -> L.list "X" Vec.empty 1
+    Nothing -> L.list "X" Vec.empty 1
 
 drawArticle :: Article -> Widget String
 drawArticle a =
@@ -71,7 +84,7 @@ drawArticles :: Bool -> Article -> Widget String
 drawArticles _ a = txt $ articleTitle a
 
 drawFeedLinks :: Int -> Bool -> RssFeed -> Widget String
-drawFeedLinks idx _ f = txt $ T.show (1 + idx) <> " - " <> (rssFeedUrl f)
+drawFeedLinks idx _ f = txt $ T.pack (show (1 + idx)) <> " - " <> rssFeedUrl f
 
 errorAttr :: AttrName
 errorAttr = attrName "error"

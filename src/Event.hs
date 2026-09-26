@@ -5,7 +5,6 @@ import qualified Brick.Widgets.List as L
 import Config (configFile, writeConfig)
 import Control.Monad.IO.Class (liftIO)
 import Data.Char (isPrint)
-import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import qualified Data.Vector as Vec
 import qualified Graphics.Vty as V
@@ -30,7 +29,7 @@ handleCommandModeEvent (VtyEvent (V.EvKey e [])) =
     V.KChar c | isPrint c -> cmd %= pushChar
       where
         pushChar (Input t) = Input $ T.snoc t c
-        pushChar _ = error "WTF"
+        pushChar x = x
     V.KBS -> cmd %= delIfInput
       where
         delIfInput (Input t) = Input (T.dropEnd 1 t)
@@ -48,7 +47,7 @@ execCmd c =
   case validateCmdInput $ T.words c of
     Left errMsg -> do
       quitCmdMode
-      cmd .= (Err errMsg)
+      cmd .= Err errMsg
     Right (command, arg) -> case command of
       "add" -> addFeedToConfig arg
       "del" -> deleteFeedFromConfig arg
@@ -72,7 +71,6 @@ handleNormalModeEvent (VtyEvent kEv@(V.EvKey e [])) =
         ReadArticleBox -> focusedBox .= FeedsBox
         _ -> pure ()
     V.KChar ':' -> do
-      -- Switch to command mode
       mode .= Command
       cmd .= Input ""
     x
@@ -126,6 +124,7 @@ addFeedToConfig url = do
       f <- liftIO $ fetchFeed url
       feeds %= \lst ->
         L.listInsert (Vec.length (L.listElements lst)) f lst
+      updateSelectedArticles
       quitCmdMode
 
 deleteFeedFromConfig :: T.Text -> EventM String AppState ()
@@ -136,7 +135,8 @@ deleteFeedFromConfig idxTxt = do
       cmd .= Err "Usage: del [index]"
     Just idx -> do
       fs <- use feeds
-      if (idx - 1) >= (Vec.length $ L.listElements fs)
+      let len = Vec.length $ L.listElements fs
+      if idx < 1 || idx > len
         then do
           quitCmdMode
           cmd .= Err "Out of Range Index"
@@ -154,18 +154,20 @@ deleteFeedFromConfig idxTxt = do
 updateSelectedArticles :: EventM String AppState ()
 updateSelectedArticles = do
   fs <- use feeds
-  let (_, f) = fromJust $ L.listSelectedElement fs
-      xs = rssFeedArticles f
-  articles .= L.list "X" (Vec.fromList xs) 1
+  case L.listSelectedElement fs of
+    Just (_, f) -> do
+      let xs = rssFeedArticles f
+      articles .= L.list "X" (Vec.fromList xs) 1
+    Nothing -> do
+      articles .= L.list "X" Vec.empty 1
 
 saveAndQuit :: EventM n AppState ()
 saveAndQuit = do
   c <- use config
-  cFile <- liftIO $ configFile
+  cFile <- liftIO configFile
   liftIO $ writeConfig cFile c
   halt
 
--- Linux only, uses xdg
 openInExternalBrowser :: String -> IO ()
 openInExternalBrowser url = do
   _ <-
